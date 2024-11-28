@@ -1,10 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.linalg import expm
 
 
 def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.0001, max_time=10):
     """
-    Calculate the time for Perfect Quantum State Transfer (PST) by evolving the system numerically.
+    Calculate the time for Perfect Quantum State Transfer (PST) by evolving the system numerically and plot fidelity over time.
 
     Parameters:
     hamiltonian (numpy.ndarray): The Hamiltonian matrix.
@@ -35,6 +36,10 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
     print("\nTarget state (normalized):")
     print(target_state)
 
+    # Prepare lists to store fidelity and time data for plotting
+    times = []
+    fidelities = []
+
     # Iterate over time steps
     time = 0
     while time <= max_time:
@@ -52,16 +57,34 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
         fidelity = np.abs(np.vdot(target_state, evolved_state)) ** 2
         print(f"Fidelity with target state at time {time:.4f}: {fidelity:.6f}")
 
+        # Store values for plotting
+        times.append(time)
+        fidelities.append(fidelity)
         # Check if fidelity is close to 1 (indicating perfect transfer)
         if fidelity > 0.999999:  # Almost perfect match
             print(f"\nPerfect state transfer achieved at time: {time:.4f}")
+            # Plot fidelity over time
+            plt.plot(times, fidelities, label="Fidelity vs Time")
+            plt.xlabel(r"Time ($\hbar/J$)", usetex=True)
+            plt.ylabel(r"Fidelity", usetex=True)
+            plt.title("Fidelity of Quantum State Transfer Over Time")
+            plt.grid()
+            plt.savefig('figure.pdf')
+            plt.show()
             return time
 
         # Increment time
         time += time_step
 
-    # If no PST found within max_time
+    # Plot fidelity over time if no PST found within max_time
     print("\nNo perfect state transfer found within the maximum time.")
+    plt.plot(times, fidelities, label="Fidelity vs Time")
+    plt.xlabel(r"Time ($\hbar/J$)", usetex=True)
+    plt.ylabel(r"Fidelity", usetex=True)
+    plt.title("Fidelity of Quantum State Transfer Over Time")
+    plt.grid()
+    plt.savefig('figure.pdf')
+    plt.show()
     return None
 
 
