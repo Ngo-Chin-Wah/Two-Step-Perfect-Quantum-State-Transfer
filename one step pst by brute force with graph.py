@@ -1,11 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import expm
+import csv
 
 
-def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.0001, max_time=10):
+def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.00001, max_time=10, output_file="fidelity_data.csv"):
     """
-    Calculate the time for Perfect Quantum State Transfer (PST) by evolving the system numerically and plot fidelity over time.
+    Calculate the time for Perfect Quantum State Transfer (PST) by evolving the system numerically,
+    plot fidelity over time, and export the fidelity and time data to a CSV file.
 
     Parameters:
     hamiltonian (numpy.ndarray): The Hamiltonian matrix.
@@ -13,6 +15,7 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
     target_state (numpy.ndarray): The target quantum state (column vector).
     time_step (float): The time increment for evolution (default is 0.01).
     max_time (float): Maximum time to search for PST (default is 10).
+    output_file (str): Name of the CSV file to export fidelity and time data.
 
     Returns:
     float: The time required for PST, or None if PST is not found within max_time.
@@ -45,24 +48,28 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
     while time <= max_time:
         # Calculate the time-evolution operator
         time_evolution_operator = expm(-1j * hamiltonian * time)
-        print(f"\nTime evolution operator at time {time:.4f}:")
-        print(time_evolution_operator)
 
         # Evolve the initial state
         evolved_state = np.dot(time_evolution_operator, initial_state)
-        print(f"\nEvolved state at time {time:.4f}:")
-        print(evolved_state)
 
         # Calculate fidelity with the target state
         fidelity = np.abs(np.vdot(target_state, evolved_state)) ** 2
-        print(f"Fidelity with target state at time {time:.4f}: {fidelity:.6f}")
 
         # Store values for plotting
         times.append(time)
         fidelities.append(fidelity)
+
         # Check if fidelity is close to 1 (indicating perfect transfer)
         if fidelity > 0.999999:  # Almost perfect match
             print(f"\nPerfect state transfer achieved at time: {time:.4f}")
+
+            # Export data to CSV
+            with open(output_file, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(["Time", "Fidelity"])
+                writer.writerows(zip(times, fidelities))
+            print(f"Fidelity and time data saved to {output_file}")
+
             # Plot fidelity over time
             plt.plot(times, fidelities, label="Fidelity vs Time")
             plt.xlabel(r"Time ($\hbar/J$)", usetex=True)
@@ -71,10 +78,18 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
             plt.grid()
             plt.savefig('figure.pdf')
             plt.show()
+
             return time
 
         # Increment time
         time += time_step
+
+    # Export data to CSV if no PST found
+    with open(output_file, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Time", "Fidelity"])
+        writer.writerows(zip(times, fidelities))
+    print(f"Fidelity and time data saved to {output_file}")
 
     # Plot fidelity over time if no PST found within max_time
     print("\nNo perfect state transfer found within the maximum time.")
@@ -85,6 +100,7 @@ def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.000
     plt.grid()
     plt.savefig('figure.pdf')
     plt.show()
+
     return None
 
 
