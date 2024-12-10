@@ -8,12 +8,12 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)  # Mute TensorFlow warni
 
 def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial_runtime_before,
                                              initial_runtime_after, initial_final_edge_weights,
-                                             target_fidelity=0.9999, stagnation_threshold=0.0001,
-                                             stagnation_window=200):
+                                             target_fidelity=0.999999999, stagnation_threshold=0.0001,
+                                             stagnation_window=1000):
     """
     Optimizes runtimes of a P4 graph Hamiltonian to achieve a target fidelity
     for transferring the quantum state from node 1 to node 4, prioritizing symmetric graphs
-    and detecting stagnation.
+    and enforcing integer edge weights.
 
     Parameters:
     fixed_initial_edge_weights (list of int): Fixed edge weights for the Hamiltonian during the first phase.
@@ -27,6 +27,13 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
     Returns:
     None. Prints details and plots optimization results.
     """
+    # Validate fixed_initial_edge_weights and initial_final_edge_weights
+    if not (all(isinstance(w, int) for w in fixed_initial_edge_weights) and
+            fixed_initial_edge_weights[0] == fixed_initial_edge_weights[2]):
+        raise ValueError("fixed_initial_edge_weights must be integers and symmetric (w1 == w3).")
+    if not (all(isinstance(w, int) for w in initial_final_edge_weights) and
+            initial_final_edge_weights[0] == initial_final_edge_weights[2]):
+        raise ValueError("initial_final_edge_weights must be integers and symmetric (w1 == w3).")
 
     def build_hamiltonian_tf(edge_weights):
         """Construct the Hamiltonian for a symmetric P4 graph using TensorFlow."""
@@ -74,14 +81,14 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
                                           dtype=tf.float32)  # Only w1 and w2 are independent
 
     # Set up the optimizer
-    optimizer = tf.optimizers.Adam(learning_rate=0.0001)
+    optimizer = tf.optimizers.Adam(learning_rate=0.001)
 
     # Perform optimization
     loss_history = []
     fidelity_history = []
     stagnation_counter = 0
 
-    for step in range(100000):  # Maximum iterations
+    for step in range(200000):  # Maximum iterations
         with tf.GradientTape() as tape:
             # Round weights to enforce integer constraint and symmetry
             final_edge_weights_tf.assign(tf.round(final_edge_weights_tf))
@@ -102,6 +109,9 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
         gradients = tape.gradient(loss_value, [runtime_before, runtime_after, final_edge_weights_tf])
         optimizer.apply_gradients(zip(gradients, [runtime_before, runtime_after, final_edge_weights_tf]))
 
+        # Ensure symmetric integer weights after gradient step
+        final_edge_weights_tf.assign(tf.round(final_edge_weights_tf))
+
         # Track loss history and fidelity
         loss_history.append(loss_value.numpy())
         fidelity_history.append(1.0 - loss_value.numpy())
@@ -114,11 +124,14 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
             if improvement < stagnation_threshold:
                 stagnation_counter += 1
                 print(f"Stagnation detected at step {step}. Perturbing variables.")
-                # Perturb runtimes and edge weights to escape local minima
-                runtime_before.assign(runtime_before + tf.random.normal([], mean=0.1, stddev=0.05))
-                runtime_after.assign(runtime_after + tf.random.normal([], mean=0.1, stddev=0.05))
-                final_edge_weights_tf.assign(
-                    final_edge_weights_tf + tf.random.uniform(final_edge_weights_tf.shape, -1, 1))
+                # Perturb runtimes to escape local minima
+                runtime_before.assign(np.abs(runtime_before + tf.random.normal([], mean=0.0, stddev=3)))
+                runtime_after.assign(np.abs(runtime_after + tf.random.normal([], mean=0.0, stddev=3)))
+
+                # Perturb symmetric edge weights
+                perturbation = tf.random.uniform([], minval=-1, maxval=1)
+                final_edge_weights_tf.assign([final_edge_weights_tf[0] + perturbation,
+                                               final_edge_weights_tf[1] + tf.random.uniform([], -1, 1)])
             else:
                 stagnation_counter = 0  # Reset stagnation counter
 
@@ -126,7 +139,7 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
         if step % 100 == 0 or loss_value < 1e-9:
             w1, w2 = final_edge_weights_tf.numpy()
             print(f"Step {step}: Fidelity = {1.0 - loss_value.numpy():.10f}, "
-                  f"Final Edge Weights = [{w1:.4f}, {w2:.4f}, {w1:.4f}], "
+                  f"Final Edge Weights = [{w1:.0f}, {w2:.0f}, {w1:.0f}], "
                   f"Runtime Before = {runtime_before.numpy():.4f}, Runtime After = {runtime_after.numpy():.4f}")
 
         # Stop if target fidelity is reached
@@ -155,11 +168,15 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
     plt.grid()
     plt.show()
 
+fixed_initial_edge_weights = [1, 1, 1]  # Fixed symmetric edge weights
+initial_runtime_before = 5.0           # Initial runtime guess before adjustment
+initial_runtime_after = 5.0            # Initial runtime guess after adjustment
+initial_final_edge_weights = [-1, 1, -1]  # Initial symmetric edge weights for the second phase
 
-# Example usage
-fixed_initial_edge_weights = [1.0, 1.0, 1.0]  # Fixed symmetric initial edge weights
-initial_runtime_before = np.pi  # Initial guess for runtime before adjustment
-initial_runtime_after = 3.0  # Initial guess for runtime after adjustment
-initial_final_edge_weights = [1.0, -1.0, 1.0]  # Initial guess for symmetric final edge weights
-fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial_runtime_before, initial_runtime_after,
-                                         initial_final_edge_weights)
+# Call the function with the initial guesses
+fidelity_simulation_P4_symmetric_weights(
+    fixed_initial_edge_weights=fixed_initial_edge_weights,
+    initial_runtime_before=initial_runtime_before,
+    initial_runtime_after=initial_runtime_after,
+    initial_final_edge_weights=initial_final_edge_weights
+)

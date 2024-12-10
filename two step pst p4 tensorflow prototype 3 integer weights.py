@@ -8,8 +8,8 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)  # Mute TensorFlow warni
 
 def fidelity_simulation_P4_fixed_integer_weights(fixed_initial_edge_weights, initial_runtime_before,
                                                  initial_runtime_after, initial_final_edge_weights,
-                                                 target_fidelity=0.9999, stagnation_threshold=0.0001,
-                                                 stagnation_window=200):
+                                                 target_fidelity=0.99999999, stagnation_threshold=0.0001,
+                                                 stagnation_window=1000):
     """
     Optimizes runtimes of a P4 graph Hamiltonian to achieve a target fidelity
     for transferring the quantum state from node 1 to node 4, keeping all edge
@@ -68,14 +68,14 @@ def fidelity_simulation_P4_fixed_integer_weights(fixed_initial_edge_weights, ini
     final_edge_weights_tf = tf.Variable(initial_final_edge_weights, dtype=tf.float32)
 
     # Set up the optimizer
-    optimizer = tf.optimizers.Adam(learning_rate=0.0001)
+    optimizer = tf.optimizers.Adam(learning_rate=0.001)
 
     # Perform optimization
     loss_history = []
     fidelity_history = []
     stagnation_counter = 0
 
-    for step in range(100000):  # Maximum iterations
+    for step in range(200000):  # Maximum iterations
         with tf.GradientTape() as tape:
             # Ensure edge weights remain integers
             final_edge_weights_tf.assign(tf.round(final_edge_weights_tf))
@@ -109,8 +109,8 @@ def fidelity_simulation_P4_fixed_integer_weights(fixed_initial_edge_weights, ini
                 stagnation_counter += 1
                 print(f"Stagnation detected at step {step}. Perturbing variables.")
                 # Perturb the runtimes and edge weights to escape local minima
-                runtime_before.assign(runtime_before + tf.random.normal([], mean=0.1, stddev=0.05))
-                runtime_after.assign(runtime_after + tf.random.normal([], mean=0.1, stddev=0.05))
+                runtime_before.assign(np.abs(runtime_before + tf.random.normal([], mean=0.0, stddev=3)))
+                runtime_after.assign(np.abs(runtime_after + tf.random.normal([], mean=0.0, stddev=3)))
                 final_edge_weights_tf.assign(final_edge_weights_tf + tf.random.uniform(final_edge_weights_tf.shape, -1, 1))
             else:
                 stagnation_counter = 0  # Reset stagnation counter
@@ -149,7 +149,7 @@ def fidelity_simulation_P4_fixed_integer_weights(fixed_initial_edge_weights, ini
 
 # Example usage
 fixed_initial_edge_weights = [1.0, 1.0, 1.0]  # Fixed initial edge weights (must be integers)
-initial_runtime_before = 0.0  # Initial guess for runtime before adjustment
-initial_runtime_after = 0.0  # Initial guess for runtime after adjustment
-initial_final_edge_weights = [1.0, 1.0, 1.0]  # Initial guess for final edge weights (must be integers)
+initial_runtime_before = 3.0  # Initial guess for runtime before adjustment
+initial_runtime_after = 3.0  # Initial guess for runtime after adjustment
+initial_final_edge_weights = [-1.0, -1.0, -1.0]  # Initial guess for final edge weights (must be integers)
 fidelity_simulation_P4_fixed_integer_weights(fixed_initial_edge_weights, initial_runtime_before, initial_runtime_after, initial_final_edge_weights)

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import expm
-
+import pandas as pd  # Import pandas for CSV export
 
 def calculate_fidelity(hamiltonian, initial_state, target_state, time):
     """
@@ -71,10 +71,10 @@ if __name__ == "__main__":
 
     # Initialize parameters
     total_time = 0
-    max_fidelity = 0.999
+    max_fidelity = 0.9999999
     max_time = 10  # Maximum allowed time for evolution
     fidelity = 0
-    time_step = 0.00001  # Time step for the second phase
+    time_step = 0.0000001  # Time step for the second phase
 
     # Tracking fidelity for the plot
     time_values = []
@@ -127,6 +127,11 @@ if __name__ == "__main__":
         if total_time > max_time:
             print("\nPerfect Quantum State Transfer was not achieved within the maximum time.")
         break
+
+    # Save fidelity and time data to CSV
+    fidelity_data = pd.DataFrame({"Time": time_values, "Fidelity": fidelity_values})
+    fidelity_data.to_csv("fidelity_vs_time.csv", index=False)
+    print("\nFidelity data has been saved to 'fidelity_vs_time.csv'.")
 
     # Final output and plotting
     plt.plot(time_values, fidelity_values, label="Fidelity vs Time")

@@ -9,7 +9,7 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)  # Mute TensorFlow warni
 def fidelity_simulation_P4_fixed_weights(fixed_initial_edge_weights, initial_runtime_before,
                                          initial_runtime_after, fixed_final_edge_weights,
                                          target_fidelity=0.9999999999, stagnation_threshold=0.0001,
-                                         stagnation_window=200):
+                                         stagnation_window=1000):
     """
     Optimizes runtimes of a P4 graph Hamiltonian to achieve a target fidelity
     for transferring the quantum state from node 1 to node 4, keeping both initial
@@ -68,14 +68,14 @@ def fidelity_simulation_P4_fixed_weights(fixed_initial_edge_weights, initial_run
     runtime_after = tf.Variable(initial_runtime_after, dtype=tf.float32)
 
     # Set up the optimizer
-    optimizer = tf.optimizers.Adam(learning_rate=0.0001)
+    optimizer = tf.optimizers.Adam(learning_rate=0.001)
 
     # Perform optimization
     loss_history = []
     fidelity_history = []
     stagnation_counter = 0
 
-    for step in range(100000):  # Maximum iterations
+    for step in range(200000):  # Maximum iterations
         with tf.GradientTape() as tape:
             # Calculate the intermediate state using the fixed initial edge weights
             h_initial = build_hamiltonian_tf(initial_edge_weights_tf)
@@ -143,7 +143,7 @@ def fidelity_simulation_P4_fixed_weights(fixed_initial_edge_weights, initial_run
 
 # Example usage
 fixed_initial_edge_weights = [1.0, 1.0, 1.0]  # Fixed initial edge weights
-fixed_final_edge_weights = [1.0, -1.0, 1.0]  # Fixed final edge weights
-initial_runtime_before = 14.412007  # Initial guess for runtime before adjustment
-initial_runtime_after = 10.863474  # Initial guess for runtime after adjustment
+fixed_final_edge_weights = [-1.0, 1.0, -1.0]  # Fixed final edge weights
+initial_runtime_before = 3.0  # Initial guess for runtime before adjustment
+initial_runtime_after = 3.0  # Initial guess for runtime after adjustment
 fidelity_simulation_P4_fixed_weights(fixed_initial_edge_weights, initial_runtime_before, initial_runtime_after, fixed_final_edge_weights)
