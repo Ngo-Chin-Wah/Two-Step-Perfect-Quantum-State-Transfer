@@ -97,7 +97,7 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
             while True:
                 runtime_before.assign(
                     tf.maximum(1 + tf.random.normal([], mean=5.0, stddev=5.0, dtype=tf.float64), 0.0))
-                if runtime_before.numpy() <= 10.0:
+                if 0.1 <= runtime_before.numpy() <= 10.0:
                     break  # Exit the loop if runtime is valid
 
             # Perturb edge weights as before
@@ -115,7 +115,7 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
                 while True:
                     runtime_before.assign(
                         tf.maximum(1 + tf.random.normal([], mean=5.0, stddev=5.0, dtype=tf.float64), 0.0))
-                    if runtime_before.numpy() <= 10.0:
+                    if 0.1 <= runtime_before.numpy() <= 10.0:
                         break  # Exit the loop if runtime is valid
 
     pd.DataFrame(solutions).to_csv("solutions_n1 to n4_-1 w2 -1_ 0.999999999999.csv", index=False)
