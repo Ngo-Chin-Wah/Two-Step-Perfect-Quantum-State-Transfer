@@ -96,13 +96,12 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
             # Perturb runtime_before with a valid value
             while True:
                 runtime_before.assign(
-                    tf.maximum(1 + tf.random.normal([], mean=5.0, stddev=5.0, dtype=tf.float64), 0.0))
+                    tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
                 if 0.1 <= runtime_before.numpy() <= 10.0:
                     break  # Exit the loop if runtime is valid
 
             # Perturb edge weights as before
-            initial_edge_weights_tf.assign(
-                initial_edge_weights_tf + tf.random.uniform([1], -5.0, 5.0, dtype=tf.float64))
+            initial_edge_weights_tf.assign(initial_edge_weights_tf + tf.random.uniform([1], -5.0, 5.0, dtype=tf.float64))
 
         if step >= stagnation_window:
             recent_fidelities = fidelity_history[-stagnation_window:]
@@ -114,11 +113,12 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
                 # Perturb runtime_before with a valid value
                 while True:
                     runtime_before.assign(
-                        tf.maximum(1 + tf.random.normal([], mean=5.0, stddev=5.0, dtype=tf.float64), 0.0))
+                        tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
                     if 0.1 <= runtime_before.numpy() <= 10.0:
                         break  # Exit the loop if runtime is valid
+                    initial_edge_weights_tf.assign(initial_edge_weights_tf + tf.random.uniform([1], -5.0, 5.0, dtype=tf.float64))
 
-    pd.DataFrame(solutions).to_csv("solutions_n1 to n4_-1 w2 -1_ 0.999999999999.csv", index=False)
+    pd.DataFrame(solutions).to_csv("solutions_n1 to n4_-1 w2 -1_ 0.999999999999(2).csv", index=False)
 
     plt.plot(loss_history)
     plt.xlabel("Iteration")
@@ -128,9 +128,9 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
     plt.show()
 
 
-fixed_initial_edge_weights = [1.0, 0.5, 1.0]  # Initial guess for edge weights (w1, w2, w3 where w3 = w1)
-initial_runtime_before = 1.0  # Initial runtime before the state transfer
-initial_runtime_after = 1.0   # Initial runtime after the state transfer
+fixed_initial_edge_weights = [1.0, -2.5, 1.0]  # Initial guess for edge weights (w1, w2, w3 where w3 = w1)
+initial_runtime_before = 2.0  # Initial runtime before the state transfer
+initial_runtime_after = 2.0   # Initial runtime after the state transfer
 
 fidelity_simulation_P4_symmetric_weights(
     fixed_initial_edge_weights=fixed_initial_edge_weights,
