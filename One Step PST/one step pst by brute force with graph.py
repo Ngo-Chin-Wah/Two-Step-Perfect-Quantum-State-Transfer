@@ -4,7 +4,7 @@ from scipy.linalg import expm
 import csv
 
 
-def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.00001, max_time=10, output_file="fidelity_data.csv"):
+def calculate_pst_time(hamiltonian, initial_state, target_state, time_step=0.001, max_time=10, output_file="fidelity_data.csv"):
     """
     Calculate the time for Perfect Quantum State Transfer (PST) by evolving the system numerically,
     plot fidelity over time, and export the fidelity and time data to a CSV file.

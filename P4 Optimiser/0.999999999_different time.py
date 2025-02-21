@@ -7,8 +7,8 @@ import logging
 logging.getLogger("tensorflow").setLevel(logging.ERROR)  # Mute TensorFlow warnings
 
 def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial_runtime_before,
-                                             initial_runtime_after, target_fidelity=0.999999999,
-                                             stagnation_threshold=0.1, stagnation_window=5000):
+                                             initial_runtime_after, target_fidelity=0.99999999999999,
+                                             stagnation_threshold=0.1, stagnation_window=10000):
     """
     Optimizes runtimes of a P4 graph Hamiltonian to achieve a target fidelity
     for transferring the quantum state from node 1 to node 4, prioritizing symmetric graphs.
@@ -76,10 +76,10 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
         runtime_after.assign(tf.maximum(runtime_after, 0.0))
 
         # Perturb runtimes if they exceed cap
-        while runtime_before.numpy() > 5.0:
-            runtime_before.assign(tf.maximum(runtime_before + tf.random.normal([], mean=0.0, stddev=1.0, dtype=tf.float64), 0.0))
-        while runtime_after.numpy() > 5.0:
-            runtime_after.assign(tf.maximum(runtime_after + tf.random.normal([], mean=0.0, stddev=1.0, dtype=tf.float64), 0.0))
+        while runtime_before.numpy() > 10.0:
+            runtime_before.assign(tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
+        while runtime_after.numpy() > 10.0:
+            runtime_after.assign(tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
 
         loss_history.append(loss_value.numpy())
         fidelity_history.append(1.0 - loss_value.numpy())
@@ -103,14 +103,13 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
 
             # Perturb runtime_before with a valid value
             while True:
-                runtime_before.assign(tf.maximum(runtime_before + tf.random.normal([], mean=0.0, stddev=1.0, dtype=tf.float64), 0.0))
-                runtime_after.assign(tf.maximum(runtime_after+ tf.random.normal([], mean=0.0, stddev=1.0, dtype=tf.float64), 0.0))
-                if runtime_before.numpy() <= 5.0 and runtime_after.numpy() <= 5.0:
+                runtime_before.assign(tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
+                runtime_after.assign(tf.maximum(1+ tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
+                if 0.5 <= runtime_before.numpy() <= 10.0 and 0.5 <= runtime_after.numpy() <= 10.0:
                     break  # Exit the loop if runtime is valid
 
             # Perturb edge weights as before
-            initial_edge_weights_tf.assign(
-                initial_edge_weights_tf + tf.random.uniform([1], -3.0, 3.0, dtype=tf.float64))
+            initial_edge_weights_tf.assign(initial_edge_weights_tf + tf.random.uniform([1], -5.0, 5.0, dtype=tf.float64))
 
         if step >= stagnation_window:
             recent_fidelities = fidelity_history[-stagnation_window:]
@@ -121,12 +120,13 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
                 print(f"Stagnation detected at step {step}. Perturbing variables.")
                 # Perturb runtime_before with a valid value
                 while True:
-                    runtime_before.assign(tf.maximum(runtime_before + tf.random.normal([], mean=0.0, stddev=3, dtype=tf.float64), 0.0))
-                    runtime_after.assign(tf.maximum(runtime_after + tf.random.normal([], mean=0.0, stddev=1.0, dtype=tf.float64), 0.0))
-                    if runtime_before.numpy() <= 5.0 and runtime_after.numpy() <= 5.0:
+                    runtime_before.assign(tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
+                    runtime_after.assign(tf.maximum(1 + tf.random.normal([], mean=3.0, stddev=2.0, dtype=tf.float64), 0.0))
+                    if runtime_before.numpy() <= 10.0 and runtime_after.numpy() <= 10.0:
                         break  # Exit the loop if runtime is valid
+                    initial_edge_weights_tf.assign(initial_edge_weights_tf + tf.random.uniform([1], -5.0, 5.0, dtype=tf.float64))
 
-    pd.DataFrame(solutions).to_csv("solutions_n1 to n4_-1 w2 -1_ 0.999999999_different time.csv", index=False)
+    pd.DataFrame(solutions).to_csv("solutions_n1 to n4_-1 w2 -1_ 0.99999999999999_different time.csv", index=False)
 
     plt.plot(loss_history)
     plt.xlabel("Iteration")

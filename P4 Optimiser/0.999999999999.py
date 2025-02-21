@@ -8,7 +8,7 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)  # Mute TensorFlow warni
 
 def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial_runtime_before,
                                              initial_runtime_after, target_fidelity=0.999999999999,
-                                             stagnation_threshold=0.1, stagnation_window=7000):
+                                             stagnation_threshold=0.1, stagnation_window=8000):
     """
     Optimizes runtimes of a P4 graph Hamiltonian to achieve a target fidelity
     for transferring the quantum state from node 1 to node 4, prioritizing symmetric graphs.
@@ -128,7 +128,7 @@ def fidelity_simulation_P4_symmetric_weights(fixed_initial_edge_weights, initial
     plt.show()
 
 
-fixed_initial_edge_weights = [1.0, -2.5, 1.0]  # Initial guess for edge weights (w1, w2, w3 where w3 = w1)
+fixed_initial_edge_weights = [1.0, 3.2, 1.0]  # Initial guess for edge weights (w1, w2, w3 where w3 = w1)
 initial_runtime_before = 2.0  # Initial runtime before the state transfer
 initial_runtime_after = 2.0   # Initial runtime after the state transfer
 

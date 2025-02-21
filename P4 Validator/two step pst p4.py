@@ -22,12 +22,15 @@ def generate_p4_hamiltonian(weights):
 if __name__ == "__main__":
     initial_weights = [float(x) for x in input("Enter initial edge weights (space-separated, 3 values): ").split()]
     final_weights = [float(x) for x in input("Enter final edge weights (space-separated, 3 values): ").split()]
-    run_time_1 = float(input("Enter runtime before adjustment: "))
-    run_time_2 = float(input("Enter runtime after adjustment: "))
+    run_time_1 =9*((15**0.5)/4)*np.pi
+    run_time_2 =9*((15**0.5)/4)*np.pi
+    # run_time_1 = float(input("Enter runtime before adjustment: "))
+    # run_time_2 = float(input("Enter runtime after adjustment: "))
 
     # Initial and final Hamiltonians
-    H1 = generate_p4_hamiltonian(initial_weights)
-    H2 = generate_p4_hamiltonian(final_weights)
+    print(initial_weights)
+    H1 = generate_p4_hamiltonian([1.0, 2/(15)**0.5, 1.0])
+    H2 = generate_p4_hamiltonian([-1.0, 2/(15)**0.5, -1.0])
 
     # Initial state (excitation at node 1)
     initial_state = np.array([1, 0, 0, 0])[:, np.newaxis]
